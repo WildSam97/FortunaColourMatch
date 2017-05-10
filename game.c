@@ -15,6 +15,10 @@
 
 const rectangle startShip = {(LCDWIDTH-5)/2, (LCDWIDTH+5)/2, LCDHEIGHT-5-1, LCDHEIGHT-1};
 const rectangle startGoal = {(LCDWIDTH-20)/2, (LCDWIDTH+20)/2, LCDHEIGHT-20-50, LCDHEIGHT-50};
+const rectangle logo1 = {20,60,50,90};
+const rectangle logo2 = {50,80,20,50};
+const rectangle logo3 = {150,180,120,150};
+const rectangle logo4 = {60,150,30,120};
 
 volatile rectangle ship, lastShip, goal, lastGoal;
 volatile uint8_t colour;	//colour used for square(max 6)
@@ -77,7 +81,9 @@ ISR(INT6_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
+	
 	static int8_t xinc = 1, yinc = 1;
+	if(mode != 2){
 	if (rotary<0){
 		colour--;
 		if(colour<1){
@@ -133,7 +139,7 @@ ISR(TIMER1_COMPA_vect)
 			ship.left += 1;
 			ship.right += 1;
 	}
-	
+	}
 	if(goalNeeded){
 		uint8_t random;
 		uint8_t goalx;
@@ -176,7 +182,7 @@ ISR(TIMER1_COMPA_vect)
 		goal.right=goalx+20;
 		goal.bottom=goaly+20;
 		goalNeeded=0;
-		if(mode){
+		if(mode==1){
 			moving=1+(rand()%2);
 		}
 		
@@ -203,19 +209,71 @@ ISR(TIMER1_COMPA_vect)
 			yinc=1;
 		}
 	}
-	
+	if(mode==2){
+		if(currentColour != goalColour){
+			colour++;
+		}
+		if(colour>14){
+			colour=0;
+		}
+		switch(colour){
+		case 2:
+			currentColour=WHITE;
+		break;
+		case 4:
+			currentColour=BLUE;
+		break;
+		case 6:
+			currentColour=GREEN;
+		break;
+		case 8:
+			currentColour=CYAN;
+		break;
+		case 10:
+			currentColour=RED;
+		break;
+		case 12:
+			currentColour=MAGENTA;
+		break;
+		case 14:
+			currentColour=YELLOW;
+		break;		
+	}
+		if(ship.top<goal.top){
+			ship.top++;
+			ship.bottom++;
+		}
+		if(ship.top > goal.top){
+			ship.top--;
+			ship.bottom--;
+		}
+		if(ship.left<goal.left){
+			ship.left++;
+			ship.right++;
+		}
+		if(ship.left>goal.left){
+			ship.left--;
+			ship.right--;
+		}
+	}
 	
 }
 ISR(TIMER3_COMPA_vect)
 {
-	char buffer[4];
-	sprintf(buffer, "%03d", timeLeft);
-	display_string_xy("time left:", 1, 1);
-	display_string_xy(buffer, 70, 1);
-	timeLeft--;
+	
+		char buffer[4];
+	if(mode !=2){
+		sprintf(buffer, "%03d", timeLeft);
+		display_string_xy("time left:", 1, 1);
+		display_string_xy(buffer, 70, 1);
+		timeLeft--;
+	}
+	else{
+		display_string_xy("DEMO - Press Centre to Exit", 1, 1);
+	}
 	sprintf(buffer, "%03d", score);
-	display_string_xy("score:", 100, 1);
-	display_string_xy(buffer, 150, 1);
+	display_string_xy("score:", 180, 1);
+	display_string_xy(buffer, 220, 1);
 }
 
 int main(){
@@ -242,6 +300,7 @@ int main(){
 	
 	random_seed=rand_init();
 	do {
+		uint16_t timer =0;
 		menu=1;
 		lastShip = ship = startShip;
 		lastGoal = goal = startGoal;
@@ -252,8 +311,15 @@ int main(){
 		moving=0;
 		OCR1A = 65535;
 		led_on();
-				display_string_xy("Press Left for Easy Mode", 20, 20);
-				display_string_xy("Press Right for Hard Mode", 20, 40);
+		//draw colourful menu screen
+		fill_rectangle(logo1, RED);
+		fill_rectangle(logo4, CYAN);
+		fill_rectangle(logo2, BLUE);
+		fill_rectangle(logo3, GREEN);
+				
+		display_string_xy("Press Left for Easy Mode", 20, 240);
+		display_string_xy("Press Right for Hard Mode", 20, 260);
+		display_string_xy("Press Down for Demo", 20, 280);
 		while(menu){
 			if(left_pressed()){
 				mode=0;
@@ -263,13 +329,22 @@ int main(){
 				mode=1;
 				menu=0;
 			}
+			if(down_pressed()){
+				mode=2;
+				menu=0;
+			}
 		}
 		clear_screen();
 		sei();
+		if(mode!=2){
 		while(timeLeft);
+		}
+		else{
+			while(PINE & _BV(SWC));
+		}
 		cli();
 		led_off();
-		display_string_xy("Game Over", 90, 150);
+		if(mode!=2){display_string_xy("Game Over", 90, 150);
 		display_string_xy("Press Centre Button To Return To Menu", 10, 170);
 		PORTB |= _BV(PB6);
 		while(PINE & _BV(SWC))
@@ -278,6 +353,7 @@ int main(){
 				led_on();
 			else
 				led_off();
+		}
 		}
 		clear_screen();
 	} while(1);
