@@ -2,7 +2,7 @@
 A small colour matching game for the LaFortuna Board.
 
 # Game instructions
-On the menu, choose your difficulty. As the on screen instructions say, press left for easy and right for hard.
+On the menu, choose your difficulty. As the on screen instructions say, press left for easy and right for hard. For a demo press down.
 In easy mode, the goal blocks do not move.
 In hard mode, there is a random chance that the goals will move around screen.
 
@@ -12,6 +12,8 @@ Scoring a point adds time to the game timer, extending the length of the game.
 Throughout the game, the timer will tick down.
 Once the timer reaches 0 the game is over.
 Pressing the centre button when the game is over will return you to the main menu.
+
+In demo mode press the centre button to return to the menu, as shown on screen.
 
 # Flashing Instructions
 (Assuming you are using the AVR Tool Chain from the COMP2215 wiki)
